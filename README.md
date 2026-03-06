@@ -5,7 +5,6 @@ A hardened Docker container for running [Claude Code](https://docs.anthropic.com
 ## Quick Start
 
 ```bash
-export ANTHROPIC_API_KEY="sk-ant-..."
 ./run.sh
 ```
 
@@ -15,6 +14,12 @@ Inside the container, run:
 
 ```bash
 claude --dangerously-skip-permissions
+```
+
+To use an API key instead of interactive login:
+
+```bash
+ANTHROPIC_API_KEY=sk-ant-... ./run.sh
 ```
 
 ## Authentication
