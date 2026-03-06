@@ -7,6 +7,4 @@
 !.devcontainer/
 !.devcontainer/**
 !run.sh
-!.claude/
-!.claude/**
 !README.md
