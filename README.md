@@ -20,6 +20,8 @@ Inside the container, run:
 claude --dangerously-skip-permissions
 ```
 
+To start a task-driven workflow with [GSD](https://www.npmjs.com/package/get-shit-done-cc), use the `/gsd` slash command inside Claude.
+
 To use an API key instead of interactive login:
 
 ```bash
