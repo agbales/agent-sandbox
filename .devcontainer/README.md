@@ -14,51 +14,25 @@ Run Claude Code in an isolated container that can only read/write the project fo
 
 ## Quick Start
 
-### Option A: Dev Container-Compatible Editor (VS Code, Cursor, etc.)
+```bash
+./run.sh
+```
 
-1. Install your editor's Dev Containers extension (e.g., [VS Code](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers), [Cursor](https://www.cursor.com/) has built-in support)
-2. Open this project in your editor
-3. Use the command palette to **"Reopen in Container"**
-4. Open a terminal and run:
-   ```bash
-   claude --dangerously-skip-permissions
-   ```
-
-### Option B: CLI (no editor required)
+This builds the image and starts the container. Inside, run:
 
 ```bash
-cd /path/to/this/project
-
-# Build the image
-docker build -t claude-sandbox .devcontainer/
-
-# Run the container
-docker run -it \
-  --cap-add=NET_ADMIN --cap-add=NET_RAW \
-  -v "$(pwd):/workspace" \
-  -v claude-config:/home/node/.claude \
-  -w /workspace \
-  claude-sandbox
-
-# Inside the container
 claude --dangerously-skip-permissions
+```
+
+To pass an API key:
+
+```bash
+ANTHROPIC_API_KEY=sk-ant-... ./run.sh
 ```
 
 ## Authentication
 
 On first run, Claude Code will prompt you to authenticate. Your credentials are stored in the persistent `claude-config` volume, so you only need to do this once.
-
-To pass an API key instead:
-
-```bash
-docker run -it \
-  --cap-add=NET_ADMIN --cap-add=NET_RAW \
-  -v "$(pwd):/workspace" \
-  -v claude-config:/home/node/.claude \
-  -e ANTHROPIC_API_KEY=sk-ant-... \
-  -w /workspace \
-  claude-sandbox
-```
 
 ## Why `--dangerously-skip-permissions` Is Safe Here
 
@@ -98,6 +72,7 @@ curl https://api.anthropic.com
 
 | File | Purpose |
 |---|---|
+| `run.sh` | Build & run script (single command entry point) |
 | `Dockerfile` | Container image: Node 20, Claude Code CLI, dev tools, firewall utilities |
 | `devcontainer.json` | Container config: mounts, capabilities, env vars, startup command |
 | `init-firewall.sh` | Network lockdown: iptables allowlist, runs on container start |
