@@ -24,9 +24,9 @@ else
     echo "No Docker DNS rules to restore"
 fi
 
-# Allow DNS and localhost before any restrictions
-iptables -A OUTPUT -p udp --dport 53 -j ACCEPT
-iptables -A INPUT -p udp --sport 53 -j ACCEPT
+# Allow DNS only to Docker's internal resolver (prevents DNS tunneling/exfiltration)
+iptables -A OUTPUT -d 127.0.0.11 -p udp --dport 53 -j ACCEPT
+iptables -A INPUT -s 127.0.0.11 -p udp --sport 53 -j ACCEPT
 iptables -A OUTPUT -p tcp --dport 22 -j ACCEPT
 iptables -A INPUT -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT
 iptables -A INPUT -i lo -j ACCEPT
@@ -89,12 +89,11 @@ if [ -z "$HOST_IP" ]; then
     exit 1
 fi
 
-HOST_NETWORK=$(echo "$HOST_IP" | sed "s/\.[0-9]*$/.0\/24/")
-echo "Host network detected as: $HOST_NETWORK"
+echo "Host gateway detected as: $HOST_IP"
 
-# Allow host network communication
-iptables -A INPUT -s "$HOST_NETWORK" -j ACCEPT
-iptables -A OUTPUT -d "$HOST_NETWORK" -j ACCEPT
+# Allow communication with host gateway only (not the entire subnet)
+iptables -A INPUT -s "$HOST_IP" -j ACCEPT
+iptables -A OUTPUT -d "$HOST_IP" -j ACCEPT
 
 # Set default policies to DROP
 iptables -P INPUT DROP

@@ -1,5 +1,5 @@
 {
-  "name": "Claude Code Sandbox",
+  "name": "Vibecode Sandbox",
   "build": {
     "dockerfile": "Dockerfile",
     "args": {
