@@ -11,6 +11,7 @@ if [ ! -d "/home/node/.claude/commands/gsd" ]; then
 fi
 
 # === Drop NET_ADMIN/NET_RAW capabilities, switch to node, exec command ===
+export HOME=/home/node
 exec setpriv \
   --reuid=node --regid=node --init-groups \
   --bounding-set=-net_admin,-net_raw \
