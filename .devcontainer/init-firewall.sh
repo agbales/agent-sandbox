@@ -24,9 +24,10 @@ else
     echo "No Docker DNS rules to restore"
 fi
 
-# Allow DNS only to Docker's internal resolver (prevents DNS tunneling/exfiltration)
-iptables -A OUTPUT -d 127.0.0.11 -p udp --dport 53 -j ACCEPT
-iptables -A INPUT -s 127.0.0.11 -p udp --sport 53 -j ACCEPT
+# Allow DNS (UDP 53) to any resolver — required on Docker's default bridge network
+# which uses the host's DNS servers, not the embedded resolver at 127.0.0.11
+iptables -A OUTPUT -p udp --dport 53 -j ACCEPT
+iptables -A INPUT -p udp --sport 53 -j ACCEPT
 iptables -A OUTPUT -p tcp --dport 22 -j ACCEPT
 iptables -A INPUT -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT
 iptables -A INPUT -i lo -j ACCEPT

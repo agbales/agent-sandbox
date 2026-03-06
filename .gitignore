@@ -7,4 +7,5 @@
 !.devcontainer/
 !.devcontainer/**
 !run.sh
+!rebuild.sh
 !README.md

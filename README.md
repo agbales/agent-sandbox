@@ -58,7 +58,7 @@ This sandbox provides defense in depth through multiple independent isolation la
 - **Bind-mount isolation** — Only `/workspace` is mounted from the host. Home directory, SSH keys, cloud credentials, and other sensitive paths are never exposed.
 - **Firewall validation** — `init-firewall.sh` tests both that blocked domains fail and allowed domains succeed, catching misconfiguration at startup.
 - **REJECT over DROP for outbound** — Blocked outbound connections return an immediate ICMP error instead of timing out, so failures surface quickly rather than causing long hangs.
-- **DNS restricted to internal resolver** — DNS queries are locked to Docker's internal resolver (`127.0.0.11`) only, preventing DNS tunneling and data exfiltration via arbitrary DNS servers.
+- **DNS allowed** — DNS queries (UDP 53) are permitted to support web access on Docker's default bridge network.
 - **No sudo** — `sudo` is not installed in the container, eliminating a privilege escalation vector.
 - **Host network scoped to gateway** — Only the Docker gateway IP is reachable, not the entire host subnet. Sibling containers and host services are not exposed.
 
@@ -69,7 +69,7 @@ The firewall (`init-firewall.sh`) permits:
 | Traffic | Policy |
 |---|---|
 | HTTP/HTTPS (ports 80/443) | **Open** — Claude needs web access for search and fetch |
-| DNS (port 53) | Allowed to Docker's internal resolver only |
+| DNS (UDP 53) | Allowed to any resolver |
 | SSH (port 22) | Allowed (Git over SSH) |
 | GitHub IP ranges | Allowed (all ports) |
 | `registry.npmjs.org`, `api.anthropic.com`, `sentry.io`, `statsig.anthropic.com`, `statsig.com` | Allowed (all ports) |
@@ -86,6 +86,7 @@ The primary containment is **filesystem and privilege isolation**, not network r
 | File | Purpose |
 |---|---|
 | `run.sh` | Build & run script (single command entry point) |
+| `rebuild.sh` | Force rebuild with no cache (e.g., after updating Claude Code version) |
 | `.devcontainer/Dockerfile` | Container image: Node 20, Claude Code CLI, dev tools, firewall utilities |
 | `.devcontainer/devcontainer.json` | VS Code / Cursor Dev Container config: mounts, capabilities, env vars |
 | `.devcontainer/entrypoint.sh` | Container entrypoint: runs firewall init, installs GSD, drops capabilities |
@@ -94,8 +95,7 @@ The primary containment is **filesystem and privilege isolation**, not network r
 ## Rebuilding
 
 ```bash
-# Force rebuild (e.g., after updating Claude Code version)
-docker build --no-cache -t agent-sandbox .devcontainer/
+./rebuild.sh
 ```
 
 Or in your editor: use the command palette → **"Rebuild Container"**
