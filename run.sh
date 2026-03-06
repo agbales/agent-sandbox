@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-IMAGE_NAME="vibecode-sandbox"
+IMAGE_NAME="agent-sandbox"
 
 # Build the image
 echo "Building $IMAGE_NAME..."
@@ -13,7 +13,7 @@ exec docker run -it \
   --cap-add=NET_ADMIN --cap-add=NET_RAW \
   -p 3000:3000 \
   -v "$(pwd):/workspace" \
-  -v vibecode-sandbox-config:/home/node/.claude \
+  -v agent-sandbox-config:/home/node/.claude \
   -w /workspace \
   -e CLAUDE_CONFIG_DIR=/home/node/.claude \
   ${ANTHROPIC_API_KEY:+-e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY"} \

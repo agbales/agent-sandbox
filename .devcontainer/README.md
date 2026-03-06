@@ -1,4 +1,4 @@
-# Vibecode Sandbox
+# Agent Sandbox
 
 Run Claude Code in an isolated container that can only read/write the project folder, has no access to host user files, and restricts network access to essential services only.
 
@@ -97,7 +97,7 @@ This sandbox provides defense in depth through multiple independent isolation la
 
 ```bash
 # Force rebuild (e.g., after updating Claude Code version)
-docker build --no-cache -t vibecode-sandbox .devcontainer/
+docker build --no-cache -t agent-sandbox .devcontainer/
 ```
 
 Or in your editor: use the command palette → **"Rebuild Container"**
