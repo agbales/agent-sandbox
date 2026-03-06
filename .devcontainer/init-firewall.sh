@@ -60,6 +60,8 @@ done < <(echo "$gh_ranges" | jq -r '(.web + .api + .git)[]' | aggregate -q)
 
 # Resolve and add other allowed domains
 for domain in \
+    "github.com" \
+    "api.github.com" \
     "registry.npmjs.org" \
     "api.anthropic.com" \
     "sentry.io" \
@@ -104,7 +106,11 @@ iptables -P OUTPUT DROP
 iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 iptables -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 
-# Allow only specific outbound traffic to allowed domains
+# Allow all outbound HTTP/HTTPS (Claude needs web access for search/fetch)
+iptables -A OUTPUT -p tcp --dport 443 -j ACCEPT
+iptables -A OUTPUT -p tcp --dport 80 -j ACCEPT
+
+# Allow outbound traffic to other allowed domains/ports (SSH, etc.)
 iptables -A OUTPUT -m set --match-set allowed-domains dst -j ACCEPT
 
 # Reject all other outbound traffic for immediate feedback

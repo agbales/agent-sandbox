@@ -35,7 +35,7 @@ On first run, Claude Code will prompt you to authenticate. Your credentials are 
 This flag auto-accepts all Claude Code permission prompts. Normally risky, but inside this container:
 
 - **Filesystem**: Claude can only touch `/workspace` (your project). No host paths are mounted.
-- **Network**: Firewall blocks everything except the Claude API, GitHub, and npm.
+- **Network**: Outbound HTTP/HTTPS is open (Claude needs web access), but non-web traffic is restricted to an allowlist. All inbound traffic is blocked.
 - **Privileges**: Runs as unprivileged `node` user. `sudo` is not installed.
 - **Ephemeral**: Anything written outside `/workspace` disappears when the container stops.
 
@@ -64,30 +64,22 @@ This sandbox provides defense in depth through multiple independent isolation la
 
 ## Network Allowlist
 
-The firewall (`init-firewall.sh`) permits outbound traffic to:
+The firewall (`init-firewall.sh`) permits:
 
-| Service | Why |
+| Traffic | Policy |
 |---|---|
-| DNS (port 53) | Domain resolution |
-| SSH (port 22) | Git over SSH |
-| `api.anthropic.com` | Claude API |
-| `registry.npmjs.org` | npm packages |
-| GitHub IP ranges | Git operations, API |
-| `sentry.io` | Error reporting |
-| `statsig.anthropic.com`, `statsig.com` | Feature flags |
-| Host gateway | Docker communication |
+| HTTP/HTTPS (ports 80/443) | **Open** — Claude needs web access for search and fetch |
+| DNS (port 53) | Allowed to Docker's internal resolver only |
+| SSH (port 22) | Allowed (Git over SSH) |
+| GitHub IP ranges | Allowed (all ports) |
+| `registry.npmjs.org`, `api.anthropic.com`, `sentry.io`, `statsig.anthropic.com`, `statsig.com` | Allowed (all ports) |
+| Host gateway | Allowed (Docker communication) |
+| All other outbound | **Blocked** (REJECT with immediate error) |
+| All inbound | **Blocked** (except established connections and host gateway) |
 
 Port 3000 is forwarded so you can preview dev servers in your host browser — for extra security, use an incognito window with no logged-in sessions.
 
-Everything else is blocked. You can verify with:
-
-```bash
-# Should fail
-curl https://example.com
-
-# Should succeed
-curl https://api.anthropic.com
-```
+The primary containment is **filesystem and privilege isolation**, not network restriction. The container cannot access host files, escalate privileges, or persist changes outside `/workspace`.
 
 ## Files
 
