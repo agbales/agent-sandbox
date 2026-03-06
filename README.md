@@ -2,6 +2,10 @@
 
 A hardened Docker container for running [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with network-level isolation. Gives the agent a full development environment while restricting outbound traffic to an allowlist of trusted services.
 
+## Prerequisites
+
+- [Docker](https://docs.docker.com/get-docker/) installed and running
+
 ## Quick Start
 
 ```bash
