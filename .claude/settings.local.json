@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__jina__parallel_read_url"
+    ]
+  }
+}

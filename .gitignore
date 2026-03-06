@@ -1,0 +1,11 @@
+# Only track the docker wrapper itself.
+# Ignore everything, then allowlist wrapper files.
+*
+
+# Wrapper files
+!.gitignore
+!.devcontainer/
+!.devcontainer/**
+!run.sh
+!.claude/
+!.claude/**
