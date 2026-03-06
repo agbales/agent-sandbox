@@ -30,7 +30,7 @@ ANTHROPIC_API_KEY=sk-ant-... ./run.sh
 
 ## Authentication
 
-On first run, Claude Code will prompt you to authenticate. Your credentials are stored in a persistent Docker volume (`agent-sandbox-config` via `run.sh`, or a per-container volume in Dev Containers), so you only need to do this once.
+On first run, Claude Code will prompt you to authenticate. Your credentials are stored in a persistent Docker volume (`agent-sandbox-config`), so you only need to sign in once — rebuilds and restarts won't require re-authentication.
 
 ## Why `--dangerously-skip-permissions` Is Safe Here
 
