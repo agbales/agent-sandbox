@@ -1,6 +1,6 @@
 # Agent Sandbox
 
-A hardened Docker container for running [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with network-level isolation. Gives the agent a full development environment while restricting outbound traffic to an allowlist of trusted services.
+A hardened Docker container for running [Claude Code](https://docs.anthropic.com/en/docs/claude-code) in isolation. Gives the agent a full development environment with web access while keeping it contained — no access to host files, credentials, or privileges.
 
 ## Prerequisites
 
@@ -35,7 +35,7 @@ On first run, Claude Code will prompt you to authenticate. Your credentials are 
 This flag auto-accepts all Claude Code permission prompts. Normally risky, but inside this container:
 
 - **Filesystem**: Claude can only touch `/workspace` (your project). No host paths are mounted.
-- **Network**: Outbound HTTP/HTTPS is open (Claude needs web access), but non-web traffic is restricted to an allowlist. All inbound traffic is blocked.
+- **Network**: HTTP/HTTPS and SSH are open; all other outbound traffic is blocked. Inbound traffic is blocked.
 - **Privileges**: Runs as unprivileged `node` user. `sudo` is not installed.
 - **Ephemeral**: Anything written outside `/workspace` disappears when the container stops.
 
@@ -52,34 +52,28 @@ The container starts as root to configure an iptables firewall, then **drops `NE
 
 This sandbox provides defense in depth through multiple independent isolation layers:
 
-- **Capability dropping** — `NET_ADMIN` and `NET_RAW` are added at startup only for firewall initialization, then permanently dropped via `setpriv` before the shell starts. The running process cannot modify network rules.
-- **Default DROP policy** — All iptables chains (INPUT, FORWARD, OUTPUT) default to DROP. Only explicitly allowlisted traffic is permitted.
-- **Non-root runtime** — The container runs as the unprivileged `node` user, not root.
 - **Bind-mount isolation** — Only `/workspace` is mounted from the host. Home directory, SSH keys, cloud credentials, and other sensitive paths are never exposed.
-- **Firewall validation** — `init-firewall.sh` tests both that blocked domains fail and allowed domains succeed, catching misconfiguration at startup.
-- **REJECT over DROP for outbound** — Blocked outbound connections return an immediate ICMP error instead of timing out, so failures surface quickly rather than causing long hangs.
-- **DNS allowed** — DNS queries (UDP 53) are permitted to support web access on Docker's default bridge network.
+- **Non-root runtime** — The container runs as the unprivileged `node` user, not root.
 - **No sudo** — `sudo` is not installed in the container, eliminating a privilege escalation vector.
+- **Capability dropping** — `NET_ADMIN` and `NET_RAW` are added at startup only for firewall initialization, then permanently dropped via `setpriv` before the shell starts. The running process cannot modify network rules.
+- **Minimal firewall** — Allows only DNS, SSH, HTTP, and HTTPS outbound. All other outbound traffic and all inbound traffic is blocked. Blocked connections return an immediate ICMP reject for fast failure.
 - **Host network scoped to gateway** — Only the Docker gateway IP is reachable, not the entire host subnet. Sibling containers and host services are not exposed.
 
-## Network Allowlist
+## Network Policy
 
-The firewall (`init-firewall.sh`) permits:
+The firewall (`init-firewall.sh`) allows only standard protocols:
 
-| Traffic | Policy |
+| Allowed | Ports |
 |---|---|
-| HTTP/HTTPS (ports 80/443) | **Open** — Claude needs web access for search and fetch |
-| DNS (UDP 53) | Allowed to any resolver |
-| SSH (port 22) | Allowed (Git over SSH) |
-| GitHub IP ranges | Allowed (all ports) |
-| `registry.npmjs.org`, `api.anthropic.com`, `sentry.io`, `statsig.anthropic.com`, `statsig.com` | Allowed (all ports) |
-| Host gateway | Allowed (Docker communication) |
-| All other outbound | **Blocked** (REJECT with immediate error) |
-| All inbound | **Blocked** (except established connections and host gateway) |
+| DNS | UDP 53 |
+| SSH | TCP 22 |
+| HTTP | TCP 80 |
+| HTTPS | TCP 443 |
+| Docker host gateway | All |
 
-Port 3000 is forwarded so you can preview dev servers in your host browser — for extra security, use an incognito window with no logged-in sessions.
+Everything else is blocked. Port 3000 is forwarded so you can preview dev servers in your host browser.
 
-The primary containment is **filesystem and privilege isolation**, not network restriction. The container cannot access host files, escalate privileges, or persist changes outside `/workspace`.
+The primary containment is **filesystem and privilege isolation**. The container cannot access host files, escalate privileges, or persist changes outside `/workspace`.
 
 ## Files
 
@@ -90,7 +84,7 @@ The primary containment is **filesystem and privilege isolation**, not network r
 | `.devcontainer/Dockerfile` | Container image: Node 20, Claude Code CLI, dev tools, firewall utilities |
 | `.devcontainer/devcontainer.json` | VS Code / Cursor Dev Container config: mounts, capabilities, env vars |
 | `.devcontainer/entrypoint.sh` | Container entrypoint: runs firewall init, installs GSD, drops capabilities |
-| `.devcontainer/init-firewall.sh` | Network lockdown: iptables allowlist, runs on container start |
+| `.devcontainer/init-firewall.sh` | Minimal firewall: allows DNS/SSH/HTTP/HTTPS, blocks everything else |
 
 ## Rebuilding
 
